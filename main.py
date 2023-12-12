@@ -1,3 +1,5 @@
+import re
+
 import requests
 from bs4 import BeautifulSoup
 
@@ -18,29 +20,44 @@ def parse_html(url):  # Парсинг Html страницы(Потом пона
         print("Ошибка при получении страницы:", response.status_code)
 
 
+# def parse_links(url):  # Парсинг ссылок
+#     headers = {'User-Agent': 'Mozilla/5.0'}
+#     response = requests.get(url, headers)
+#
+#     if response.status_code == 200:
+#
+#         soup = BeautifulSoup(response.content, 'html.parser')
+#         parts = soup.find_all("a")
+#         htmltext = []
+#         for part in parts:
+#             attrLink = str(part).split("\"")
+#             i = 0
+#             while i < len(attrLink):
+#                 if attrLink[i] == ' href=' or attrLink[i] == '<a href=':
+#                     if attrLink[i+1] != "/":
+#                         htmltext.append(attrLink[i+1])
+#                     break
+#                 i+=1
+#
+#         return htmltext
+#     else:
+#         return []
 def parse_links(url):  # Парсинг ссылок
     headers = {'User-Agent': 'Mozilla/5.0'}
     response = requests.get(url, headers)
 
     if response.status_code == 200:
-
         soup = BeautifulSoup(response.content, 'html.parser')
         parts = soup.find_all("a")
-        htmltext = []
-        for part in parts:
-            attrLink = str(part).split("\"")
-            i = 0
-            while i < len(attrLink):
-                if attrLink[i] == ' href=' or attrLink[i] == '<a href=':
-                    if attrLink[i+1] != "/":
-                        htmltext.append(attrLink[i+1])
-                    break
-                i+=1
 
+        htmltext = re.findall("href=\"https?://[^\"\s>]+|href=\"(?:/[^\"\s>]+)",str(parts))
+        i=0
+        while i<len(htmltext):
+            htmltext[i] = htmltext[i].split("href=\"")[1]
+            i+=1
         return htmltext
     else:
         return []
-
 
 def cheсk_links(root_link, links):
     answer_links = []
@@ -49,6 +66,7 @@ def cheсk_links(root_link, links):
         if links[i][0] == '/':
             links[i] = root_link + links[i]
         if len(links[i].replace("/", " ").split(' ')) > 2:
+            print(links[i])
             if links[i].split("/")[0] + "//" + links[i].replace("/", " ").split(' ')[2] == root_link:
 
                 answer_links.append(links[i])
